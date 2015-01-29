@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import dto.ChunkInfo;
 import dto.Featured;
-import dto.Featured.FeaturedGame;
 import dto.GameDataChunk;
 import dto.GameMeta;
 import dto.GameStats;
@@ -130,14 +129,16 @@ public class RiotSpectatorImpl implements RiotSpectator {
     public static void main(String[] args){
 //        System.out.println(buildUrl(Server.NA, "featured", null, null, null));
         final RiotSpectatorImpl client = new RiotSpectatorImpl(Server.EUW);
-        Promise<Featured> result = client.featured();
-        final Featured featured = result.get();
-        final FeaturedGame featuredGame = featured.gameList.get(0);
-        GameMeta meta = client.getGameMetaData(featuredGame.platformId, featuredGame.gameId).get();
-        client.getKeyFrame(featuredGame.platformId, featuredGame.gameId, meta.lastKeyFrameId).get();
-        client.getGameDataChunk(featuredGame.platformId, featuredGame.gameId, meta.lastChunkId).get();
-        client.getLastChunkInfo(featuredGame.platformId, featuredGame.gameId).get();
-        client.getEndOfGameStats(featuredGame.platformId, featuredGame.gameId).get();
+//        Promise<Featured> result = client.featured();
+//        final Featured featured = result.get();
+//        final FeaturedGame featuredGame = featured.gameList.get(0);
+//        GameMeta meta = client.getGameMetaData(featuredGame.platformId, featuredGame.gameId).get();
+//        client.getKeyFrame(featuredGame.platformId, featuredGame.gameId, meta.lastKeyFrameId).get();
+//        client.getGameDataChunk(featuredGame.platformId, featuredGame.gameId, meta.lastChunkId).get();
+//        client.getLastChunkInfo(featuredGame.platformId, featuredGame.gameId).get();
+        new RiotSpectatorImpl(Server.EUNE).getGameMetaData(Platform.EUN1.toString(), "1088444063").get();
+        new RiotSpectatorImpl(Server.EUNE).getEndOfGameStats(Platform.EUN1.toString(), "1088444063").get();
+        System.exit(0);
     }
     
 }

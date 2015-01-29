@@ -13,6 +13,7 @@ public class GameMeta {
     public String lastChunkId;
     public String lastKeyFrameId;
     public String endStartupChunkId;
+    public String endTime;
     public long delayTime;
     public long keyFrameTimeInterval;
     public String decodedEncryptionKey;

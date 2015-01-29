@@ -10,12 +10,14 @@ public class Featured {
         public String gameId;
         public String mapId;
         public String gameMode;
-        public String gameType;        
+        public String gameQueueConfigId;
+        public String gameType;
+        public String gameTypeConfigId;
         public String platformId;
         public long gameStartTime;
         public int gameLength;
         public List<Participant> participants;
-        public List<Observer> observers;
+        public Observer observers;
         public List<BannedChampion> bannedChampions;
     }
     
