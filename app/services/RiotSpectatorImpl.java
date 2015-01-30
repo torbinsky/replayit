@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import dto.ChunkInfo;
 import dto.Featured;
+import dto.Featured.FeaturedGame;
 import dto.GameDataChunk;
 import dto.GameMeta;
 import dto.GameStats;
@@ -34,7 +35,7 @@ public class RiotSpectatorImpl implements RiotSpectator {
     @Override
     public Promise<String> version() {
         final String method = "version";
-        String url = buildUrl(server, false, method, null, null, null, null);
+        String url = buildUrl(server, true, method, null, null, null, null);
         System.out.println(url);
         return callMethod(url, String.class);
     }
@@ -55,28 +56,54 @@ public class RiotSpectatorImpl implements RiotSpectator {
 
     @Override
     public Promise<GameStats> getEndOfGameStats(String platformId, String gameId) {
-        final String method = "getEndOfGameStats";
+        final String method = "endOfGameStats";
         String url = buildUrl(server, true, method, platformId, gameId, "null", null);
         return callMethod(url, GameStats.class);
     }
 
     @Override
     public Promise<GameDataChunk> getGameDataChunk(String platformId, String gameId, String chunkId) {
-        final String method = "getGameMetaData";
+        final String method = "getGameDataChunk";
         String url = buildUrl(server, true, method, platformId, gameId, chunkId, "token");
-        return callMethod(url, GameDataChunk.class);
+        return callMethod(url).map(new Function<Response, GameDataChunk>(){
+            @Override
+            public GameDataChunk apply(Response a) throws Throwable {
+                if(a.getStatus() < 300 && a.getStatus() > 199){
+                    GameDataChunk gdc = new GameDataChunk(a.asByteArray());
+                    return gdc;
+                }
+                System.out.println("Encountered error: " + a.getBody());
+                // TODO: Handle ERRORS
+                return null;
+            }            
+        });
     }
 
     @Override
     public Promise<KeyFrame> getKeyFrame(String platformId, String gameId, String keyFrameId) {
-        final String method = "getGameMetaData";
+        final String method = "getKeyFrame";
         String url = buildUrl(server, true, method, platformId, gameId, keyFrameId, "token");
-        return callMethod(url, KeyFrame.class);
+        return callMethod(url).map(new Function<Response, KeyFrame>(){
+            @Override
+            public KeyFrame apply(Response a) throws Throwable {
+                if(a.getStatus() < 300 && a.getStatus() > 199){
+                    KeyFrame kf = new KeyFrame(a.asByteArray());
+                    return kf;
+                }
+                System.out.println("Encountered error: " + a.getBody());
+                // TODO: Handle ERRORS
+                return null;
+            }            
+        });
+    }
+    
+    private static Promise<Response> callMethod(String url){
+        System.out.println("DEBUG CALL: \n" + url);
+        return WS.url(url).get();
     }
     
     private static <T> Promise<T> callMethod(String url, final Class<T> clazz){
-        System.out.println("DEBUG CALL: \n" + url);
-        return WS.url(url).get().map(new Function<Response, T>(){
+        return callMethod(url).map(new Function<Response, T>(){
             @SuppressWarnings("unchecked")
             @Override
             public T apply(Response a) throws Throwable {
@@ -126,18 +153,18 @@ public class RiotSpectatorImpl implements RiotSpectator {
         return sb.toString();
     }
     
-    public static void main(String[] args){
+    public static void main(String[] args) throws InterruptedException{
 //        System.out.println(buildUrl(Server.NA, "featured", null, null, null));
         final RiotSpectatorImpl client = new RiotSpectatorImpl(Server.EUW);
-//        Promise<Featured> result = client.featured();
-//        final Featured featured = result.get();
-//        final FeaturedGame featuredGame = featured.gameList.get(0);
-//        GameMeta meta = client.getGameMetaData(featuredGame.platformId, featuredGame.gameId).get();
-//        client.getKeyFrame(featuredGame.platformId, featuredGame.gameId, meta.lastKeyFrameId).get();
-//        client.getGameDataChunk(featuredGame.platformId, featuredGame.gameId, meta.lastChunkId).get();
-//        client.getLastChunkInfo(featuredGame.platformId, featuredGame.gameId).get();
-        new RiotSpectatorImpl(Server.EUNE).getGameMetaData(Platform.EUN1.toString(), "1088444063").get();
-        new RiotSpectatorImpl(Server.EUNE).getEndOfGameStats(Platform.EUN1.toString(), "1088444063").get();
+        System.out.println(client.version().get());
+        Promise<Featured> result = client.featured();
+        final Featured featured = result.get();
+        final FeaturedGame featuredGame = featured.gameList.get(0);
+        GameMeta meta = client.getGameMetaData(featuredGame.platformId, featuredGame.gameId).get();
+        KeyFrame keyframe = client.getKeyFrame(featuredGame.platformId, featuredGame.gameId, meta.pendingAvailableKeyFrameInfo.get(0).id).get();
+        client.getLastChunkInfo(featuredGame.platformId, featuredGame.gameId).get();
+        final GameDataChunk gameDataChunk = client.getGameDataChunk(featuredGame.platformId, featuredGame.gameId, meta.pendingAvailableChunkInfo.get(0).id).get();
+        System.out.println("Got [" + gameDataChunk.chunkBytes.length + "] chunk bytes");
         System.exit(0);
     }
     

@@ -24,7 +24,7 @@ public interface RiotSpectator {
     Promise<KeyFrame> getKeyFrame(String platformId, String gameId, String keyFrameId);
 
     public enum Server {
-        NA("spectator.na.lol.riotgames.com:8088"), EUW("spectator.eu.lol.riotgames.com:8088"), EUNE("spectator.eu.lol.riotgames.com:8088"), BR("spectator.br.lol.riotgames.com:80"), LAN(
+        NA("spectator.na.lol.riotgames.com"), EUW("spectator.eu.lol.riotgames.com:8088"), EUNE("spectator.eu.lol.riotgames.com:8088"), BR("spectator.br.lol.riotgames.com:80"), LAN(
                 "spectator.br.lol.riotgames.com:80"), RUS("spectator.tr.lol.riotgames.com:80"), TUR("spectator.tr.lol.riotgames.com:80"), PBE("spectator.pbe1.lol.riotgames.com:8088"), SK(
                 "QFKR1PROXY.kassad.in:8088"), TW("QFTW1PROXY.kassad.in:8088"), SEA("qfsea1proxy.kassad.in:8088"), ;
         private final String connString;
