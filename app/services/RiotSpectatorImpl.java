@@ -1,6 +1,17 @@
 package services;
 
+import java.io.File;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
 import javax.annotation.Nullable;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 import play.libs.F.Function;
 import play.libs.F.Promise;
@@ -9,6 +20,7 @@ import play.libs.WS;
 import play.libs.WS.Response;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.ning.http.util.Base64;
 
 import dto.ChunkInfo;
 import dto.Featured;
@@ -96,6 +108,30 @@ public class RiotSpectatorImpl implements RiotSpectator {
             }            
         });
     }
+
+    @Override
+    public Promise<File> recordGame(String platformId, String gameId) {
+        return getGameMetaData(platformId, gameId).flatMap(new Function<GameMeta, Promise<File>>(){
+            @Override
+            public Promise<File> apply(GameMeta gameMeta) throws Throwable {
+                System.out.println("KEY: " + getEncryptionKey(gameMeta));
+                return null;
+            }
+        });
+    }
+    
+    private static String getEncryptionKey(GameMeta meta) throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException{
+        if(meta.encryptionKey == null || meta.encryptionKey.isEmpty()){
+            return "";
+        }
+        
+        byte[] keyBytes = Base64.decode(meta.encryptionKey);
+        Cipher cipher = Cipher.getInstance("Blowfish");
+        SecretKeySpec key = new SecretKeySpec(keyBytes, "Blowfish");
+        cipher.init(Cipher.DECRYPT_MODE, key);
+        
+        return Base64.encode(cipher.doFinal(meta.gameKey.gameId.getBytes()));
+    }
     
     private static Promise<Response> callMethod(String url){
         System.out.println("DEBUG CALL: \n" + url);
@@ -153,19 +189,19 @@ public class RiotSpectatorImpl implements RiotSpectator {
         return sb.toString();
     }
     
+    @SuppressWarnings("deprecation")
     public static void main(String[] args) throws InterruptedException{
-//        System.out.println(buildUrl(Server.NA, "featured", null, null, null));
+//        for(Server server : Server.values()){
+//            final RiotSpectatorImpl client = new RiotSpectatorImpl(server);
+//            System.out.println("Server " + server.getName() + " is at version: " + client.version().get());
+//        }
         final RiotSpectatorImpl client = new RiotSpectatorImpl(Server.EUW);
-        System.out.println(client.version().get());
         Promise<Featured> result = client.featured();
         final Featured featured = result.get();
         final FeaturedGame featuredGame = featured.gameList.get(0);
-        GameMeta meta = client.getGameMetaData(featuredGame.platformId, featuredGame.gameId).get();
-        KeyFrame keyframe = client.getKeyFrame(featuredGame.platformId, featuredGame.gameId, meta.pendingAvailableKeyFrameInfo.get(0).id).get();
-        client.getLastChunkInfo(featuredGame.platformId, featuredGame.gameId).get();
-        final GameDataChunk gameDataChunk = client.getGameDataChunk(featuredGame.platformId, featuredGame.gameId, meta.pendingAvailableChunkInfo.get(0).id).get();
-        System.out.println("Got [" + gameDataChunk.chunkBytes.length + "] chunk bytes");
+        client.recordGame(featuredGame.platformId, featuredGame.gameId).get();
+//        GameMeta meta = client.getGameMetaData(featuredGame.platformId, featuredGame.gameId).get();
+//        System.out.println(Json.toJson(meta).toString());
         System.exit(0);
     }
-    
 }
